@@ -1,0 +1,38 @@
+name: Dusklight PS4 r25 offline
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.event.repository.visibility == 'public'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ninja-build meson bison flex pkg-config \
+            python3-mako python3-yaml python3-packaging python3-ply libxml2-dev zstd
+          if ! command -v clang-21 >/dev/null || ! command -v llvm-readelf-21 >/dev/null; then
+            curl -fsSL --retry 3 https://apt.llvm.org/llvm.sh -o "$RUNNER_TEMP/llvm.sh"
+            sudo bash "$RUNNER_TEMP/llvm.sh" 21
+            sudo apt-get install -y llvm-21
+          fi
+          df -h .
+      - name: Build Orbis executable and validate ELF layout
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOBS: '3'
+        run: bash ./build-cloud.sh "$RUNNER_TEMP/dusklight-r25"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: dusklight-ps4-offline
+          path: ${{ runner.temp }}/dusklight-r25/cloud-output/
+          if-no-files-found: error
+          retention-days: 3
