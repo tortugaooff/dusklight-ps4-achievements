@@ -52,6 +52,10 @@ bash refs/DolphinPS4/toolchain/build-libcxx.sh
 bash refs/DolphinPS4/toolchain/build-runtime.sh
 # Dawn and SDL3 expect a local CMake toolchain path missing from the release tree.
 printf 'include("%s/refs/DolphinPS4/toolchain/ps4-love-modern.cmake")\n' "$root" > toolchain/ps4.cmake
+# Both Dawn configurations must use the r25-patched Abseil checkout.
+for script in tools/build-dawn.sh tools/build-game.sh; do
+    sed -i '/-DCMAKE_BUILD_TYPE=Release/i\        "-DDAWN_ABSEIL_DIR=$PS4_PORT_ROOT/src/abseil" \\' "$script"
+done
 bash "$bundle/build-ps4.sh" "$root"
 
 eboot=build/game/dusklight_eboot/eboot.bin
