@@ -17,13 +17,17 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential ninja-build meson bison flex pkg-config \
+          sudo apt-get install -y build-essential ninja-build python3-venv bison flex pkg-config \
             python3-mako python3-yaml python3-packaging python3-ply libxml2-dev zstd
           if ! command -v clang-21 >/dev/null || ! command -v llvm-readelf-21 >/dev/null; then
             curl -fsSL --retry 3 https://apt.llvm.org/llvm.sh -o "$RUNNER_TEMP/llvm.sh"
             sudo bash "$RUNNER_TEMP/llvm.sh" 21
             sudo apt-get install -y llvm-21
           fi
+          python3 -m venv --system-site-packages "$RUNNER_TEMP/mesa-tools"
+          "$RUNNER_TEMP/mesa-tools/bin/python" -m pip install meson==1.7.2
+          "$RUNNER_TEMP/mesa-tools/bin/meson" --version
+          echo "$RUNNER_TEMP/mesa-tools/bin" >> "$GITHUB_PATH"
           df -h .
       - name: Build Orbis executable and validate ELF layout
         env:
