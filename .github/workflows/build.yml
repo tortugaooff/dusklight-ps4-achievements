@@ -18,7 +18,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential ninja-build python3-venv bison flex pkg-config \
-            python3-mako python3-yaml python3-packaging python3-ply libxml2-dev zstd
+            python3-mako python3-yaml python3-packaging python3-ply libxml2-dev zstd glslang-tools spirv-tools
           if ! command -v clang-21 >/dev/null || ! command -v llvm-readelf-21 >/dev/null; then
             curl -fsSL --retry 3 https://apt.llvm.org/llvm.sh -o "$RUNNER_TEMP/llvm.sh"
             sudo bash "$RUNNER_TEMP/llvm.sh" 21
