@@ -27,6 +27,7 @@ tools/fetch-sources.sh
 test "$(git -C src/dusklight rev-parse HEAD)" = 5811958531cb0a9eafeb293fafcb36071883bfdf
 git -C src/dusklight apply --check "$bundle/dusklight-r25-conquistas-cloud.patch"
 git -C src/dusklight apply "$bundle/dusklight-r25-conquistas-cloud.patch"
+cp -a "$bundle/visual-source/." src/dusklight/
 for name in aurora borealis; do
     git -C "src/dusklight/extern/$name" apply "$root/patches/$name-ps4.patch"
 done
