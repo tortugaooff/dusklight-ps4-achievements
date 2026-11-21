@@ -64,5 +64,12 @@ first_load="$(awk '$1 == "LOAD" && !seen { print $3, $7, $8; seen = 1 }' cloud-o
 [[ "$first_load" == "0x0000000000000000 R E" ]]
 cp "$eboot" cloud-output/
 cp src/dusklight/ps4/default-config.json cloud-output/
-cp -a src/dusklight/res cloud-output/
-(cd cloud-output && sha256sum eboot.bin default-config.json > SHA256SUMS.txt)
+cp "$bundle/LICENSE" "$bundle/THIRD_PARTY_LICENSES.txt" cloud-output/
+{
+    printf 'Build source: https://github.com/tortugaooff/dusklight-ps4-achievements/commit/%s\n' "$(git -C "$bundle" rev-parse HEAD)"
+    for tree in refs/r25 refs/DolphinPS4 src/dusklight src/dawn src/sdl3 src/abseil src/mesa src/libdrm src/twilight-hd-hud; do
+        printf '%s %s\n' "$tree" "$(git -C "$tree" rev-parse HEAD)"
+    done
+    git -C src/dusklight submodule status --recursive
+} > cloud-output/source-revisions.txt
+(cd cloud-output && sha256sum eboot.bin default-config.json elf-layout.txt source-revisions.txt LICENSE THIRD_PARTY_LICENSES.txt > SHA256SUMS.txt)

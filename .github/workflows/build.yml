@@ -33,6 +33,13 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: dusklight-ps4-offline
-          path: ${{ runner.temp }}/dusklight-r25/cloud-output/
+          path: |
+            ${{ runner.temp }}/dusklight-r25/cloud-output/eboot.bin
+            ${{ runner.temp }}/dusklight-r25/cloud-output/default-config.json
+            ${{ runner.temp }}/dusklight-r25/cloud-output/elf-layout.txt
+            ${{ runner.temp }}/dusklight-r25/cloud-output/source-revisions.txt
+            ${{ runner.temp }}/dusklight-r25/cloud-output/LICENSE
+            ${{ runner.temp }}/dusklight-r25/cloud-output/THIRD_PARTY_LICENSES.txt
+            ${{ runner.temp }}/dusklight-r25/cloud-output/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 3
