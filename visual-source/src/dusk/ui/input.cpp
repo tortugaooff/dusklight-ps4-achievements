@@ -2,6 +2,7 @@
 
 #include "ui.hpp"
 #include "achievements.hpp"
+#include "menu_bar.hpp"
 
 #include <RmlUi/Core.h>
 #include <SDL3/SDL_gamepad.h>
@@ -43,14 +44,7 @@ struct TouchpadPress {
 TouchpadPress sTouchpadPress;
 
 void open_dusklight_menu() {
-    if (auto* top = top_document(); top != nullptr && top->scope() == DocumentScope::Window) {
-        top->force_hide(true);
-        uncover_top_document();
-    }
-    if (auto* menu = find_document(DocumentScope::MenuBar)) {
-        menu->show();
-        menu->focus();
-    }
+    pop_to_or_push<MenuBar>([](MenuBar&) {});
 }
 
 void toggle_achievements() {
@@ -847,7 +841,9 @@ void process_axis_direction(
 }  // namespace
 
 void sync_input_block() noexcept {
-    const bool shouldBlock = any_document_visible();
+    const auto* achievements = dynamic_cast<const AchievementsWindow*>(top_document());
+    const bool shouldBlock = any_document_visible() ||
+                             (achievements != nullptr && achievements->preview_pending());
     if (sPadInputBlocked == shouldBlock) {
         return;
     }

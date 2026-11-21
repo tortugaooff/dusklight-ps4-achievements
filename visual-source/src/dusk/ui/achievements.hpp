@@ -12,6 +12,7 @@ public:
     AchievementsWindow();
     void update() override;
     void preview_selected();
+    bool preview_pending() const { return static_cast<bool>(mPreviewFinished); }
 
 private:
     bool handle_nav_command(Rml::Event& event, NavCommand cmd) override;

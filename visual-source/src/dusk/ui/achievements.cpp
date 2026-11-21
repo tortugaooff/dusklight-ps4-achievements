@@ -162,6 +162,9 @@ AchievementsWindow::AchievementsWindow()
 }
 
 bool AchievementsWindow::handle_nav_command(Rml::Event& event, NavCommand cmd) {
+    if (preview_pending()) {
+        return true;
+    }
     switch (cmd) {
     case NavCommand::Next:
     case NavCommand::Previous: {
