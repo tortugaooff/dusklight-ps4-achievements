@@ -41,7 +41,7 @@ git -C src/twilight-hd-hud apply "$root/patches/twilight-hd-ps4.patch"
 
 llvm=llvm-project-21.1.6.src
 tar -xJf "downloads/$llvm.tar.xz" -C src "$llvm/"{runtimes,libcxx,libcxxabi,libunwind,libc,cmake,llvm/cmake,llvm/utils/lit,llvm/utils/llvm-lit,third-party}
-git -C "src/$llvm" apply "$root/patches/libcxx-ps4-atomic-wait.patch"
+git -C "src/$llvm/libcxx/src" apply "$root/patches/libcxx-ps4-atomic-wait.patch"
 curl --fail --silent --show-error --location --retry 3 \
     https://github.com/encounter/symgen/releases/download/v1.3.6/symgen-linux-x86_64 \
     -o downloads/symgen/symgen-linux-x86_64
