@@ -96,15 +96,26 @@ AchievementsWindow::AchievementsWindow()
         } else if (mFilter == Filter::Unlocked) {
             filterLabel = "Desbloqueadas";
         }
-        append_text(filter, fmt::format("L1 / R1 · {}    △ Prévia", filterLabel));
+        constexpr const char* rarityLabels[] = {"Todas as rúpias", "Verde", "Azul", "Vermelha"};
+        append_text(filter, fmt::format("L1 / R1 · {}    ← / → · {}    △ Prévia",
+            filterLabel, rarityLabels[static_cast<int>(mRarity)]));
         if (mStorageUnavailable) {
             append_text(append(content, "p"), "Registro local indisponível.");
         }
         mVisibleCount = 0;
+        const auto passes_filter = [this](const Definition& item, bool unlocked) {
+            const bool matchesStatus = mFilter == Filter::All ||
+                (mFilter == Filter::Unlocked && unlocked) ||
+                (mFilter == Filter::Locked && !unlocked);
+            const bool matchesRarity = mRarity == RarityFilter::All ||
+                (mRarity == RarityFilter::Green && item.id == Id::Slingshot) ||
+                (mRarity == RarityFilter::Blue && item.id == Id::Cucco) ||
+                (mRarity == RarityFilter::Red && item.id == Id::Goats);
+            return matchesStatus && matchesRarity;
+        };
         for (const auto& item : catalog) {
             const bool unlocked = (mUnlocked & bit(item.id)) != 0;
-            if (!(mFilter == Filter::Locked && unlocked) &&
-                !(mFilter == Filter::Unlocked && !unlocked)) {
+            if (passes_filter(item, unlocked)) {
                 ++mVisibleCount;
             }
         }
@@ -119,8 +130,7 @@ AchievementsWindow::AchievementsWindow()
         mScrollToSelection = true;
         for (const auto& item : catalog) {
             const bool unlocked = (mUnlocked & achievement_poc::bit(item.id)) != 0;
-            if ((mFilter == Filter::Locked && unlocked) ||
-                (mFilter == Filter::Unlocked && !unlocked)) {
+            if (!passes_filter(item, unlocked)) {
                 continue;
             }
             auto* row = append(content, "achievement-row");
@@ -157,6 +167,13 @@ bool AchievementsWindow::handle_nav_command(Rml::Event& event, NavCommand cmd) {
     case NavCommand::Previous: {
         const int step = cmd == NavCommand::Next ? 1 : 2;
         mFilter = static_cast<Filter>((static_cast<int>(mFilter) + step) % 3);
+        mSelection = 0;
+        break;
+    }
+    case NavCommand::Left:
+    case NavCommand::Right: {
+        const int step = cmd == NavCommand::Right ? 1 : 3;
+        mRarity = static_cast<RarityFilter>((static_cast<int>(mRarity) + step) % 4);
         mSelection = 0;
         break;
     }

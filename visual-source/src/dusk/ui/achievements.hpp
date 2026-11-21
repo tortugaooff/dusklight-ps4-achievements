@@ -16,7 +16,9 @@ public:
 private:
     bool handle_nav_command(Rml::Event& event, NavCommand cmd) override;
     enum class Filter { All, Locked, Unlocked };
+    enum class RarityFilter { All, Green, Blue, Red };
     Filter mFilter = Filter::All;
+    RarityFilter mRarity = RarityFilter::All;
     std::size_t mSelection = 0;
     std::size_t mVisibleCount = 0;
     bool mScrollToSelection = false;
