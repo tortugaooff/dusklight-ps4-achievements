@@ -17,12 +17,7 @@ checkout() {
 
 checkout https://github.com/BgbrhrWatchinOVO/dusklight-ps4.git fd483cf5d4f04b0f4d887ff412d0e8691925de08 refs/r25
 checkout https://github.com/iHaiDeeZ/DolphinPS4.git b1879cc0267a2a4f0949d7b80478fcf2abca24f6 refs/DolphinPS4
-git clone --depth=1 --branch ps5-v0.1.0 https://github.com/mshivam019/dusklight-ps5.git refs/dusklight-ps5
-for tag in deps/dawn-ps5 deps/sdl3-ps5 deps/abseil-20240722-ps5; do
-    git -C refs/dusklight-ps5 fetch --depth=1 origin "refs/tags/$tag:refs/tags/$tag"
-done
-# Aurora is a gitlink into this same upstream history.
-git -C refs/dusklight-ps5 fetch --depth=1 origin e281999cdb4fee6127525a9a9e97979480db4bf3
+git -c advice.detachedHead=false clone --branch ps5-v0.1.0 https://github.com/mshivam019/dusklight-ps5.git refs/dusklight-ps5
 cp -a refs/r25/tools refs/r25/patches .
 chmod +x tools/*.sh
 git -C refs/DolphinPS4 apply "$root/patches/dolphinps4-ps4-runtime.patch"
