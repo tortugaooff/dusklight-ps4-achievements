@@ -20,8 +20,15 @@ fi
 cd "$root"
 export FLAVOR=dev
 unset PGO
+if ! tools/build-sdl3.sh; then
+    log="$root/build/sdl3/CMakeFiles/CMakeConfigureLog.yaml"
+    if [[ -f "$log" ]]; then
+        grep -A 45 -B 4 'HAVE_PTHREADS' "$log" || true
+    fi
+    exit 1
+fi
+grep -Fx 'HAVE_PTHREADS:INTERNAL=1' "$root/build/sdl3/CMakeCache.txt"
 tools/build-mesa.sh
 tools/build-dawn.sh
-tools/build-sdl3.sh
 tools/build-game.sh
 find "$root/build/game" -type f -name eboot.bin -print

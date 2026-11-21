@@ -56,6 +56,11 @@ printf 'include("%s/refs/DolphinPS4/toolchain/ps4-love-modern.cmake")\n' "$root"
 for script in tools/build-dawn.sh tools/build-game.sh; do
     sed -i '/-DCMAKE_BUILD_TYPE=Release/i\        "-DDAWN_ABSEIL_DIR=$PS4_PORT_ROOT/src/abseil" \\' "$script"
 done
+# PacBrew identifies the target as Generic. SDL needs its Unix source-selection
+# branch for pthreads and timers, while the PS4 linker and sysroot stay in use.
+printf 'include("%s/toolchain/ps4.cmake")\nset(CMAKE_SYSTEM_NAME FreeBSD)\n' "$root" > toolchain/sdl3-ps4.cmake
+sed -i 's@/toolchain/ps4.cmake@/toolchain/sdl3-ps4.cmake@' tools/build-sdl3.sh
+sed -i '/-DCMAKE_BUILD_TYPE=Release/i\        -DSDL_PTHREADS=ON \\' tools/build-sdl3.sh
 bash "$bundle/build-ps4.sh" "$root"
 
 eboot=build/game/dusklight_eboot/eboot.bin
