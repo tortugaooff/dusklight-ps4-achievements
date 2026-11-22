@@ -3,10 +3,11 @@ window.carapaca-window {
     height: 88%;
     max-width: 760dp;
     max-height: 590dp;
-    border-width: 1dp;
-    border-color: #aa8d58;
+    border-width: 2dp;
+    border-color: #bc9e64;
     background-color: #221e1b;
-    box-shadow: 0 0 18dp 3dp #100e0d;
+    decorator: linear-gradient(145deg, #302821 0%, #231f1c 32%, #191716 100%);
+    box-shadow: #100e0d 0 0 18dp 3dp;
 }
 
 window.carapaca-window content {
@@ -21,6 +22,9 @@ window.carapaca-window content {
     font-weight: bold;
     color: #f5ddb2;
     margin: 0 30dp 8dp 0;
+    padding-bottom: 6dp;
+    border-bottom-width: 1dp;
+    border-bottom-color: #8c7047;
 }
 
 .carapaca-progress {
@@ -34,6 +38,14 @@ window.carapaca-window content {
     flex: 0 0 8dp;
     width: 100%;
     margin-bottom: 8dp;
+    background-color: #140f0c;
+    border-width: 1dp;
+    border-color: #695438;
+}
+
+.carapaca-progress-bar fill {
+    background-color: #b39762;
+    decorator: vertical-gradient(#e2ca8e #8d693b);
 }
 
 .carapaca-window achievement-row {
@@ -62,6 +74,7 @@ window.carapaca-window content {
     background-color: #3e3225;
     border-left-width: 2dp;
     border-left-color: #ceb47d;
+    decorator: linear-gradient(90deg, #493a29 0%, #342b23 65%, #29231e 100%);
 }
 
 .carapaca-rarity {

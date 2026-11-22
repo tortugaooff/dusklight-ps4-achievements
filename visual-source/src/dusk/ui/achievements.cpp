@@ -5,6 +5,7 @@
 #include <fmt/format.h>
 
 #include <fstream>
+#include <array>
 #include <iterator>
 #include <optional>
 #include <span>
@@ -25,10 +26,14 @@ struct Artwork {
     bool attempted = false;
 };
 
-Artwork artwork[] = {
-    {"slingshot", 256}, {"cucco_control", 256}, {"goats_under_minute", 256},
-    {"rupia-verde", 128}, {"rupia-azul", 128}, {"rupia-vermelha", 128},
-};
+auto artwork = [] {
+    std::array<Artwork, std::size(catalog) + 3> result{};
+    std::size_t index = 0;
+    for (const auto& item : catalog) result[index++] = Artwork{item.key, 256};
+    for (const auto* rupee : {"rupia-verde", "rupia-azul", "rupia-vermelha"})
+        result[index++] = Artwork{rupee, 128};
+    return result;
+}();
 
 std::optional<aurora::rmlui::RuntimeTexture> load_artwork(std::string_view source) {
     if (!source.starts_with(kArtPrefix)) {
@@ -63,29 +68,29 @@ std::optional<aurora::rmlui::RuntimeTexture> load_artwork(std::string_view sourc
     return std::nullopt;
 }
 
-const char* rupee_color(Id id) {
-    switch (id) {
-    case Id::Slingshot: return "#80dba1";
-    case Id::Cucco: return "#86bffc";
-    case Id::Goats: return "#f0887c";
+const char* rupee_color(Rarity rarity) {
+    switch (rarity) {
+    case Rarity::Green: return "#80dba1";
+    case Rarity::Blue: return "#86bffc";
+    case Rarity::Red: return "#f0887c";
     }
     return "#e4c894";
 }
 
-const char* rupee_label(Id id) {
-    switch (id) {
-    case Id::Slingshot: return "Verde";
-    case Id::Cucco: return "Azul";
-    case Id::Goats: return "Vermelha · Opcional";
+const char* rupee_label(Rarity rarity) {
+    switch (rarity) {
+    case Rarity::Green: return "Verde";
+    case Rarity::Blue: return "Azul";
+    case Rarity::Red: return "Vermelha";
     }
     return "";
 }
 
-const char* rupee_file(Id id) {
-    switch (id) {
-    case Id::Slingshot: return "rupia-verde";
-    case Id::Cucco: return "rupia-azul";
-    case Id::Goats: return "rupia-vermelha";
+const char* rupee_file(Rarity rarity) {
+    switch (rarity) {
+    case Rarity::Green: return "rupia-verde";
+    case Rarity::Blue: return "rupia-azul";
+    case Rarity::Red: return "rupia-vermelha";
     }
     return "";
 }
@@ -111,7 +116,7 @@ void enqueue_toast(const Definition& item, std::shared_ptr<bool> preview = {}) {
         .content = item.name,
         .duration = std::chrono::seconds(4),
         .illustration = illustration(item),
-        .rupee = art_path(rupee_file(item.id)),
+        .rupee = art_path(rupee_file(item.rarity)),
         .finished = std::move(preview),
     });
 }
@@ -175,9 +180,9 @@ AchievementsWindow::AchievementsWindow()
                 (mFilter == Filter::Unlocked && unlocked) ||
                 (mFilter == Filter::Locked && !unlocked);
             const bool matchesRarity = mRarity == RarityFilter::All ||
-                (mRarity == RarityFilter::Green && item.id == Id::Slingshot) ||
-                (mRarity == RarityFilter::Blue && item.id == Id::Cucco) ||
-                (mRarity == RarityFilter::Red && item.id == Id::Goats);
+                (mRarity == RarityFilter::Green && item.rarity == Rarity::Green) ||
+                (mRarity == RarityFilter::Blue && item.rarity == Rarity::Blue) ||
+                (mRarity == RarityFilter::Red && item.rarity == Rarity::Red);
             return matchesStatus && matchesRarity;
         };
         for (const auto& item : catalog) {
@@ -214,9 +219,10 @@ AchievementsWindow::AchievementsWindow()
             append_text(name, item.name);
             auto* rupee = append(info, "p");
             rupee->SetClass("carapaca-rarity", true);
-            rupee->SetProperty("color", rupee_color(item.id));
-            append_image(rupee, "carapaca-rupee", art_path(rupee_file(item.id)));
-            append_text(rupee, rupee_label(item.id));
+            rupee->SetProperty("color", rupee_color(item.rarity));
+            append_image(rupee, "carapaca-rupee", art_path(rupee_file(item.rarity)));
+            append_text(rupee, fmt::format("{}{}", rupee_label(item.rarity),
+                item.optional ? " · Opcional" : ""));
             auto* badge = append(header, "status-badge");
             badge->SetClass(unlocked ? "success" : "error", true);
             append_text(badge, unlocked ? "Desbloqueada" : "Bloqueada");

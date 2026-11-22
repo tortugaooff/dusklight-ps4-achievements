@@ -28,6 +28,15 @@ test "$(git -C src/dusklight rev-parse HEAD)" = 5811958531cb0a9eafeb293fafcb3607
 git -C src/dusklight apply --check "$bundle/dusklight-r25-conquistas-cloud.patch"
 git -C src/dusklight apply "$bundle/dusklight-r25-conquistas-cloud.patch"
 cp -a "$bundle/visual-source/." src/dusklight/
+git -C src/dusklight fetch --no-tags https://github.com/TwilitRealm/dusklight.git refs/tags/v2.0.3:refs/tags/v2.0.3
+test "$(git -C src/dusklight rev-parse 'v2.0.3^{commit}')" = 40457c6adb381928e4b5fef6ed459ed291edd5e2
+git -C src/dusklight merge-base --is-ancestor v2.0.3 HEAD
+test "$(git -C src/dusklight rev-list --count v2.0.3..HEAD)" = 2
+test "$(git -C src/dusklight describe --tags --long --match 'v*')" = v2.0.3-2-g581195853
+g++ -std=c++20 -Wall -Wextra -Werror -iquote src/dusklight/src/dusk "$bundle/catalog-tests.cpp" -o "$root/catalog-tests"
+mkdir "$root/catalog-test-data"
+"$root/catalog-tests" "$root/catalog-test-data"
+echo 'Carapaca descriptor, legacy migration and catalog tests passed'
 for name in aurora borealis; do
     git -C "src/dusklight/extern/$name" apply "$root/patches/$name-ps4.patch"
 done
@@ -68,6 +77,7 @@ eboot=build/game/dusklight_eboot/eboot.bin
 elf=build/game/dusklight
 test -s "$eboot"
 test -s "$elf"
+LC_ALL=C grep -aFq 2.0.3.2 "$elf"
 mkdir -p cloud-output
 llvm-readelf-21 -h -lW "$elf" > cloud-output/elf-layout.txt
 first_load="$(awk '$1 == "LOAD" && !seen { print $3, $7, $8; seen = 1 }' cloud-output/elf-layout.txt)"
