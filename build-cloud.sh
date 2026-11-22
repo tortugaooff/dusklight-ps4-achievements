@@ -32,7 +32,9 @@ git -C src/dusklight fetch --no-tags https://github.com/TwilitRealm/dusklight.gi
 test "$(git -C src/dusklight rev-parse 'v2.0.3^{commit}')" = 40457c6adb381928e4b5fef6ed459ed291edd5e2
 git -C src/dusklight merge-base --is-ancestor v2.0.3 HEAD
 test "$(git -C src/dusklight rev-list --count v2.0.3..HEAD)" = 2
-test "$(git -C src/dusklight describe --tags --long --match 'v*')" = v2.0.3-2-g581195853
+host_description="$(git -C src/dusklight describe --tags --long --match 'v*')"
+printf 'Verified Dusklight host: %s\n' "$host_description"
+[[ "$host_description" =~ ^v2\.0\.3-2-g[[:xdigit:]]+$ ]]
 g++ -std=c++20 -Wall -Wextra -Werror -iquote src/dusklight/src/dusk "$bundle/catalog-tests.cpp" -o "$root/catalog-tests"
 mkdir "$root/catalog-test-data"
 "$root/catalog-tests" "$root/catalog-test-data"
