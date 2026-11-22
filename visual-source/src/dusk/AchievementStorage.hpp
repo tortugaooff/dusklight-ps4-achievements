@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <optional>
+#include <string>
 
 namespace dusk::achievement_poc {
 
@@ -23,7 +24,8 @@ public:
         char record[4]{};
         if (!file.read(record, sizeof(record)) || file.peek() != std::char_traits<char>::eof() ||
             file.bad() || record[0] != '1' || record[1] != ':' ||
-            record[2] < '0' || record[2] > '0' + legacyBits || record[3] != '\n') {
+            record[2] < '0' || record[2] > static_cast<char>('0' + legacyBits) ||
+            record[3] != '\n') {
             return std::nullopt;
         }
         return static_cast<Mask>(record[2] - '0');

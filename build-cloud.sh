@@ -48,6 +48,16 @@ git -C src/mesa apply --check "$root/patches/mesa-26.0.8-ps4.patch"
 git -C src/mesa apply "$root/patches/mesa-26.0.8-ps4.patch"
 checkout https://github.com/OTPR26/twilight-hd-hud.git 9fd501de8ce05381bd188d88a7bda600586bbc23 src/twilight-hd-hud
 git -C src/twilight-hd-hud apply "$root/patches/twilight-hd-ps4.patch"
+cat > "$root/check-hud-host.cpp" <<'CPP'
+#include "host_compatibility.hpp"
+int main() {
+    using twilight_hd_hud::supported_host_version;
+    return supported_host_version("2.0.3.2") && !supported_host_version("0.0.0.0") ? 0 : 1;
+}
+CPP
+g++ -std=c++20 -Wall -Wextra -Werror -Isrc/twilight-hd-hud/src "$root/check-hud-host.cpp" -o "$root/check-hud-host"
+"$root/check-hud-host"
+echo 'Twilight HD guard accepts verified host 2.0.3.2'
 
 llvm=llvm-project-21.1.6.src
 tar -xJf "downloads/$llvm.tar.xz" -C src "$llvm/"{runtimes,libcxx,libcxxabi,libunwind,libc,cmake,llvm/cmake,llvm/utils/lit,llvm/utils/llvm-lit,third-party}
