@@ -10,8 +10,8 @@ fi
 
 source_tree="$root/src/dusklight"
 if [[ ! -f "$source_tree/src/dusk/AchievementCore.hpp" ]] ||
-   ! grep -Fq -- '--user-dir=/data/dusklight-achievements-poc/user' "$source_tree/ps4/main.cpp" ||
-   ! grep -Fq '/data/dusklight-achievements-poc/cache' "$source_tree/src/m_Do/m_Do_main.cpp"; then
+   ! grep -Fq -- '--user-dir=/data/dusklight-carapaca-dskl00001/user' "$source_tree/ps4/main.cpp" ||
+   ! grep -Fq '/data/dusklight-carapaca-dskl00001/cache' "$source_tree/src/m_Do/m_Do_main.cpp"; then
     echo "A variante com os caminhos de dados isolados precisa estar em src/dusklight." >&2
     exit 1
 fi

@@ -1409,7 +1409,7 @@ index 0000000..0fce7e7
 +++ b/ps4/main.cpp
 @@ -0,0 +1,53 @@
 +// The PS4 title's entry point, after ps5/main.cpp. /app0 (the installed package) is read-only on
-+// the PS4, so the user data, logs and the game's disc image live in /data/dusklight-achievements-poc: copy your
++// the PS4, so the user data, logs and the game's disc image live in /data/dusklight-carapaca-dskl00001: copy your
 +// own GameCube disc image there as game.iso.
 +#include <sys/stat.h>
 +
@@ -1427,36 +1427,36 @@ index 0000000..0fce7e7
 +int main() {
 +    platform_init("Dusklight");
 +#if PS4_DEV_TOOLS
-+    // The profiler reports frame statistics to the log (ps4/prof); /data/dusklight-achievements-poc/prof adds its
-+    // zones and the sampler, /data/dusklight-achievements-poc/noprof turns it off. The release has no profiler.
++    // The profiler reports frame statistics to the log (ps4/prof); /data/dusklight-carapaca-dskl00001/prof adds its
++    // zones and the sampler, /data/dusklight-carapaca-dskl00001/noprof turns it off. The release has no profiler.
 +    struct stat noProfiler {};
-+    if (stat("/data/dusklight-achievements-poc/noprof", &noProfiler) != 0)
++    if (stat("/data/dusklight-carapaca-dskl00001/noprof", &noProfiler) != 0)
 +        ps4prof::start();
 +#endif
-+    mkdir("/data/dusklight-achievements-poc", 0777);
-+    mkdir("/data/dusklight-achievements-poc/user", 0777);
-+    mkdir("/data/dusklight-achievements-poc/logs", 0777);
-+    mkdir("/data/dusklight-achievements-poc/cache", 0777);
++    mkdir("/data/dusklight-carapaca-dskl00001", 0777);
++    mkdir("/data/dusklight-carapaca-dskl00001/user", 0777);
++    mkdir("/data/dusklight-carapaca-dskl00001/logs", 0777);
++    mkdir("/data/dusklight-carapaca-dskl00001/cache", 0777);
 +    // The console preset (ps4/default-config.json: English, no update checks), on the first run only.
 +    std::error_code error;
-+    if (!std::filesystem::exists("/data/dusklight-achievements-poc/user/config.json", error))
-+        std::filesystem::copy_file("/app0/default-config.json", "/data/dusklight-achievements-poc/user/config.json", error);
++    if (!std::filesystem::exists("/data/dusklight-carapaca-dskl00001/user/config.json", error))
++        std::filesystem::copy_file("/app0/default-config.json", "/data/dusklight-carapaca-dskl00001/user/config.json", error);
 +
 +    SDL_Environment* environment = SDL_GetEnvironment();
 +    SDL_SetEnvironmentVariable(environment, "SDL_VIDEODRIVER", "dummy", true);
 +    // SDL3's SceAudioOut driver (src/audio/ps5 in the SDL3 fork) serves both consoles.
 +    SDL_SetEnvironmentVariable(environment, "SDL_AUDIODRIVER", "ps5", true);
-+    SDL_SetEnvironmentVariable(environment, "XDG_DATA_HOME", "/data/dusklight-achievements-poc/user", true);
++    SDL_SetEnvironmentVariable(environment, "XDG_DATA_HOME", "/data/dusklight-carapaca-dskl00001/user", true);
 +
 +    char app[] = "/app0/eboot.bin";
-+    char user[] = "--user-dir=/data/dusklight-achievements-poc/user";
-+    char log[] = "--log-dir=/data/dusklight-achievements-poc/logs";
++    char user[] = "--user-dir=/data/dusklight-carapaca-dskl00001/user";
++    char log[] = "--log-dir=/data/dusklight-carapaca-dskl00001/logs";
 +    // The game image: inside the package when the Setup Studio built a complete one (/app0/game.iso),
 +    // otherwise the one copied to /data (the separate setup).
 +    struct stat embedded {};
 +    char disc[64];
 +    std::snprintf(disc, sizeof(disc), "%s",
-+        stat("/app0/game.iso", &embedded) == 0 ? "/app0/game.iso" : "/data/dusklight-achievements-poc/game.iso");
++        stat("/app0/game.iso", &embedded) == 0 ? "/app0/game.iso" : "/data/dusklight-carapaca-dskl00001/game.iso");
 +    char* args[] = {app, user, log, disc, nullptr};
 +    const int status = aurora_main(4, args);
 +    catchReturnFromMain(status);
@@ -1508,7 +1508,7 @@ index 0000000..3e07ef2
 +int sceKernelUsleep(unsigned int microseconds);
 +int sceKernelDebugOutText(int channel, const char *text);
 +
-+#define LOG_DIR "/data/dusklight-achievements-poc"
++#define LOG_DIR "/data/dusklight-carapaca-dskl00001"
 +
 +/* Calling into a system library whose module isn't loaded kills the title
 + * (PRX_NOT_RESOLVED_FUNCTION); DolphinPS4 loads these first. */
@@ -2029,10 +2029,10 @@ index 0000000..95bcc39
 +void ps4_pgo_dump(void) {
 +    static unsigned s_dumps = 0;
 +    if (s_dumps == 0) {
-+        mkdir("/data/dusklight-achievements-poc/pgo", 0777);
++        mkdir("/data/dusklight-carapaca-dskl00001/pgo", 0777);
 +    }
-+    const char* name = s_dumps % 2 == 0 ? "/data/dusklight-achievements-poc/pgo/dusklight-a.profraw"
-+                                        : "/data/dusklight-achievements-poc/pgo/dusklight-b.profraw";
++    const char* name = s_dumps % 2 == 0 ? "/data/dusklight-carapaca-dskl00001/pgo/dusklight-a.profraw"
++                                        : "/data/dusklight-carapaca-dskl00001/pgo/dusklight-b.profraw";
 +    // The runtime appends to an existing file (it would hold every earlier dump too).
 +    std::remove(name);
 +    __llvm_profile_set_filename(name);
@@ -2052,7 +2052,7 @@ index 0000000..f9dd672
 +// the previous second; a second with a slow frame (a hitch, a scene load) gets the sites that took
 +// the time listed. Every ten seconds a summary follows: frame rate, frame times, how busy the main
 +// thread and the process were, and the most expensive sites. Lines go to stderr, the title's log
-+// (/data/dusklight-achievements-poc/dusklight.log), prefixed "[prof]".
++// (/data/dusklight-carapaca-dskl00001/dusklight.log), prefixed "[prof]".
 +#include "ps4_profiler.hpp"
 +
 +#include <algorithm>
@@ -2096,7 +2096,7 @@ index 0000000..f9dd672
 +
 +// Frame statistics, thread CPU time and the scene timeline: on whenever the profiler runs. Zones
 +// (g_enabled) and the sampler cost the FIFO thread a fifth of its time and are on only with
-+// /data/dusklight-achievements-poc/prof.
++// /data/dusklight-carapaca-dskl00001/prof.
 +std::atomic<bool> g_stats{false};
 +
 +std::atomic<Site*> s_sites{nullptr};
@@ -2145,7 +2145,7 @@ index 0000000..f9dd672
 +// The sampler: SIGPROF to the main, render and FIFO threads about 1000 times a second each. The
 +// handler notes where the thread was; the reporter appends the samples to samples.bin, which
 +// tools/ps4-samples.py symbolizes - where the time goes inside functions without zones, Dawn and
-+// Mesa included. /data/dusklight-achievements-poc/nosample turns it off.
++// Mesa included. /data/dusklight-carapaca-dskl00001/nosample turns it off.
 +constexpr int SigProf = 27;          // FreeBSD (and Linux) numbering
 +constexpr int SaSiginfo = 0x40;      // FreeBSD values: the musl headers may carry Linux ones
 +constexpr int SaRestart = 0x02;
@@ -2585,13 +2585,13 @@ index 0000000..f9dd672
 +    }
 +    s_startTicks = ticks();
 +    struct stat st;
-+    const bool zones = stat("/data/dusklight-achievements-poc/prof", &st) == 0;
++    const bool zones = stat("/data/dusklight-carapaca-dskl00001/prof", &st) == 0;
 +    std::fprintf(stderr,
 +        "[prof] profiler on (%s): TSC %.0f MHz, core clock ~%.0f MHz, %u hardware threads, main thread on core %d\n",
-+        zones ? "zones and sampler: /data/dusklight-achievements-poc/prof" : "frame statistics only", s_tscPerMs / 1000.0,
++        zones ? "zones and sampler: /data/dusklight-carapaca-dskl00001/prof" : "frame statistics only", s_tscPerMs / 1000.0,
 +        measure_core_mhz(), std::thread::hardware_concurrency(), sceKernelGetCurrentCpu());
-+    if (zones && stat("/data/dusklight-achievements-poc/nosample", &st) != 0) {
-+        s_sampleFile = std::fopen("/data/dusklight-achievements-poc/samples.bin", "wb");
++    if (zones && stat("/data/dusklight-carapaca-dskl00001/nosample", &st) != 0) {
++        s_sampleFile = std::fopen("/data/dusklight-carapaca-dskl00001/samples.bin", "wb");
 +    }
 +    if (s_sampleFile != nullptr) {
 +        std::fwrite("DSMP\1\0\0\0", 8, 1, s_sampleFile);
@@ -5869,7 +5869,7 @@ index b7dc8de..500f031 100644
 +        config.startFullscreen = false;
 +        config.pauseOnFocusLost = false;
 +        config.resourcesPath = "/app0/";
-+        config.cachePath = "/data/dusklight-achievements-poc/cache";
++        config.cachePath = "/data/dusklight-carapaca-dskl00001/cache";
 +        config.desiredBackend = BACKEND_VULKAN;
  #endif
          auroraInfo = aurora_initialize(argc, argv, &config);
