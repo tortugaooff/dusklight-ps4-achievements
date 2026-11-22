@@ -1,0 +1,8 @@
+CARAPACA_ENTRY(talo_archery, "Flecha certeira", "Conclua o desafio de arco em Kakariko.", Blue, true, flag, M_042)
+CARAPACA_ENTRY(star_game_one, "Estrelas na mão", "Vença a primeira rodada do Jogo das Estrelas.", Blue, true, flag, F_290)
+CARAPACA_ENTRY(star_game_two, "Constelação completa", "Vença a segunda rodada do Jogo das Estrelas.", Red, true, flag, F_0293)
+CARAPACA_ENTRY(cave_ten, "Dez andares abaixo", "Chegue ao décimo andar da Caverna das Provações.", Blue, true, flag, F_0501)
+CARAPACA_ENTRY(cave_twenty, "Vinte andares abaixo", "Chegue ao vigésimo andar da Caverna das Provações.", Blue, true, flag, F_0502)
+CARAPACA_ENTRY(cave_thirty, "Trinta andares abaixo", "Chegue ao trigésimo andar da Caverna das Provações.", Red, true, flag, F_0503)
+CARAPACA_ENTRY(cave_forty, "Quarenta andares abaixo", "Chegue ao quadragésimo andar da Caverna das Provações.", Red, true, flag, F_0504)
+CARAPACA_ENTRY(cave_fifty, "O fundo da caverna", "Chegue ao quinquagésimo andar da Caverna das Provações.", Red, true, flag, F_0505)

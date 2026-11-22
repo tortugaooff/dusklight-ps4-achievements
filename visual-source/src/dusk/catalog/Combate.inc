@@ -1,0 +1,7 @@
+CARAPACA_ENTRY(hidden_ending_blow, "Golpe decisivo", "Aprenda a primeira técnica secreta, o golpe final.", Green, false, flag, F_0339)
+CARAPACA_ENTRY(hidden_shield_attack, "Escudo em ação", "Aprenda a segunda técnica secreta.", Green, true, flag, F_0338)
+CARAPACA_ENTRY(hidden_back_slice, "Pelas costas", "Aprenda a terceira técnica secreta.", Blue, true, flag, F_0340)
+CARAPACA_ENTRY(hidden_helm_splitter, "Salto sobre o elmo", "Aprenda a quarta técnica secreta.", Blue, true, flag, F_0341)
+CARAPACA_ENTRY(hidden_mortal_draw, "Desembainhar fatal", "Aprenda a quinta técnica secreta.", Blue, true, flag, F_0342)
+CARAPACA_ENTRY(hidden_jump_strike, "Salto devastador", "Aprenda a sexta técnica secreta.", Blue, true, flag, F_0343)
+CARAPACA_ENTRY(hidden_great_spin, "O giro supremo", "Aprenda a sétima técnica secreta.", Red, true, flag, F_0344)

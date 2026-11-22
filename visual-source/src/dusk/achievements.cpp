@@ -22,6 +22,12 @@ Mask persistent_progress() {
         if (reached) result |= bit(id);
     };
     using Flags = dSv_event_flag_c;
+    const auto poeCount = dComIfGs_getPohSpiritNum();
+#define CARAPACA_READ_FLAG(value) dComIfGs_isEventBit(Flags::value)
+#define CARAPACA_READ_ITEM(value) dComIfGs_isItemFirstBit(dItemNo_##value##_e)
+#include "dusk/catalog/Observation.inc"
+#undef CARAPACA_READ_FLAG
+#undef CARAPACA_READ_ITEM
     record(Id::Slingshot, dComIfGs_getItem(SLOT_23, true) == dItemNo_PACHINKO_e ||
         dComIfGs_isEventBit(Flags::F_0600));
     record(Id::RescueTalo, dComIfGs_isEventBit(Flags::F_0625));
@@ -57,7 +63,7 @@ void AchievementSystem::signal(Id id) {
 }
 
 void AchievementSystem::tick() {
-    const Mask observed = std::exchange(mObserved, 0);
+    const Mask observed = std::exchange(mObserved, Mask{});
     const auto& mode = gamemode::getGameModeManager();
     const bool eligible = mode.isCurrentGameMode(gamemode::kVanillaGameModeId) ||
                           mode.isCurrentGameMode(speedrun::kSpeedrunGameModeId);
@@ -75,14 +81,15 @@ void AchievementSystem::tick() {
     if (now < mNextStorageAttempt) {
         return;
     }
-    if (mLoaded && (mPending & ~mCore.unlocked()) == 0) {
+    if (mLoaded && (mPending & ~mCore.unlocked()).none()) {
         mPending = 0;
         return;
     }
 
-    const auto path = ConfigPath / "achievements-v2.dat";
+    const auto path = ConfigPath / "achievements-v3.dat";
     if (!mLoaded) {
-        const auto loaded = AchievementStorage::load(path, ConfigPath / "achievements-poc-v1.dat");
+        const auto loaded = AchievementStorage::load(path, ConfigPath / "achievements-poc-v1.dat",
+            ConfigPath / "achievements-v2.dat");
         if (!loaded) {
             mStorageUnavailable = true;
             mNextStorageAttempt = now + std::chrono::seconds(2);
@@ -95,7 +102,7 @@ void AchievementSystem::tick() {
 
     auto next = mCore;
     const Mask newlyUnlocked = next.unlock(mPending);
-    if (newlyUnlocked && !AchievementStorage::save(path, next.unlocked())) {
+    if (newlyUnlocked.any() && !AchievementStorage::save(path, next.unlocked())) {
         mStorageUnavailable = true;
         mNextStorageAttempt = now + std::chrono::seconds(2);
         return;
@@ -103,7 +110,7 @@ void AchievementSystem::tick() {
     mCore = next;
     mPending = 0;
     mStorageUnavailable = false;
-    if (newlyUnlocked && getSettings().game.enableAchievementToasts) {
+    if (newlyUnlocked.any() && getSettings().game.enableAchievementToasts) {
         ui::show_achievement_toasts(newlyUnlocked);
     }
 }

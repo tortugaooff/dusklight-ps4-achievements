@@ -1,0 +1,5 @@
+CARAPACA_ENTRY(snowpeak_map, "Guia da neve", "Receba o mapa de Yeta nas Ruínas do Pico Nevado.", Green, true, flag, M_059)
+CARAPACA_ENTRY(iza_first_descent, "Pelas corredeiras", "Conclua a primeira descida no rio de Iza.", Green, true, flag, M_063)
+CARAPACA_ENTRY(cats_hidden_village, "O chamado dos gatos", "Conclua o desafio dos gatos da Vila Oculta.", Blue, true, flag, F_0749)
+CARAPACA_ENTRY(rollgoal, "O tabuleiro de Hena", "Conclua a sequência do jogo de bolinha que concede a isca de sapo.", Red, true, flag, F_0637)
+CARAPACA_ENTRY(malo_bridge_fund, "Pedra por pedra", "Complete a arrecadação de fundos para reparar a ponte.", Blue, true, flag, F_0376)

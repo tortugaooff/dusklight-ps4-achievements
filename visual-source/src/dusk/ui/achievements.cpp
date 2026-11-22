@@ -27,10 +27,10 @@ struct Artwork {
 };
 
 auto artwork = [] {
-    std::array<Artwork, std::size(catalog) + 3> result{};
+    std::array<Artwork, std::size(catalog) + 4> result{};
     std::size_t index = 0;
     for (const auto& item : catalog) result[index++] = Artwork{item.key, 256};
-    for (const auto* rupee : {"rupia-verde", "rupia-azul", "rupia-vermelha"})
+    for (const auto* rupee : {"rupia-verde", "rupia-azul", "rupia-vermelha", "rupia-especial"})
         result[index++] = Artwork{rupee, 128};
     return result;
 }();
@@ -73,6 +73,7 @@ const char* rupee_color(Rarity rarity) {
     case Rarity::Green: return "#80dba1";
     case Rarity::Blue: return "#86bffc";
     case Rarity::Red: return "#f0887c";
+    case Rarity::Luminous: return "#fff0b5";
     }
     return "#e4c894";
 }
@@ -82,6 +83,7 @@ const char* rupee_label(Rarity rarity) {
     case Rarity::Green: return "Verde";
     case Rarity::Blue: return "Azul";
     case Rarity::Red: return "Vermelha";
+    case Rarity::Luminous: return "Luminosa";
     }
     return "";
 }
@@ -91,6 +93,7 @@ const char* rupee_file(Rarity rarity) {
     case Rarity::Green: return "rupia-verde";
     case Rarity::Blue: return "rupia-azul";
     case Rarity::Red: return "rupia-vermelha";
+    case Rarity::Luminous: return "rupia-especial";
     }
     return "";
 }
@@ -136,7 +139,7 @@ void unregister_carapaca_art() {
 
 void show_achievement_toasts(achievement_poc::Mask newlyUnlocked) {
     for (const auto& item : achievement_poc::catalog) {
-        if (newlyUnlocked & achievement_poc::bit(item.id)) {
+        if ((newlyUnlocked & achievement_poc::bit(item.id)).any()) {
             enqueue_toast(item);
         }
     }
@@ -148,7 +151,7 @@ AchievementsWindow::AchievementsWindow()
     set_content([this](Rml::Element* content) {
         int totalUnlocked = 0;
         for (const auto& item : achievement_poc::catalog) {
-            totalUnlocked += (mUnlocked & achievement_poc::bit(item.id)) != 0;
+            totalUnlocked += (mUnlocked & achievement_poc::bit(item.id)).any();
         }
         auto* heading = append(content, "h1");
         heading->SetClass("carapaca-title", true);
@@ -168,7 +171,7 @@ AchievementsWindow::AchievementsWindow()
         } else if (mFilter == Filter::Unlocked) {
             filterLabel = "Desbloqueadas";
         }
-        constexpr const char* rarityLabels[] = {"Todas as rúpias", "Verde", "Azul", "Vermelha"};
+        constexpr const char* rarityLabels[] = {"Todas as rúpias", "Verde", "Azul", "Vermelha", "Luminosa"};
         append_text(filter, fmt::format("L1 / R1 · {}    ← / → · {}    △ Prévia",
             filterLabel, rarityLabels[static_cast<int>(mRarity)]));
         if (mStorageUnavailable) {
@@ -182,11 +185,12 @@ AchievementsWindow::AchievementsWindow()
             const bool matchesRarity = mRarity == RarityFilter::All ||
                 (mRarity == RarityFilter::Green && item.rarity == Rarity::Green) ||
                 (mRarity == RarityFilter::Blue && item.rarity == Rarity::Blue) ||
-                (mRarity == RarityFilter::Red && item.rarity == Rarity::Red);
+                (mRarity == RarityFilter::Red && item.rarity == Rarity::Red) ||
+                (mRarity == RarityFilter::Luminous && item.rarity == Rarity::Luminous);
             return matchesStatus && matchesRarity;
         };
         for (const auto& item : catalog) {
-            const bool unlocked = (mUnlocked & bit(item.id)) != 0;
+            const bool unlocked = (mUnlocked & bit(item.id)).any();
             if (passes_filter(item, unlocked)) {
                 ++mVisibleCount;
             }
@@ -197,16 +201,18 @@ AchievementsWindow::AchievementsWindow()
         } else if (mSelection >= mVisibleCount) {
             mSelection = mVisibleCount - 1;
         }
-        std::size_t visibleIndex = 0;
+        mRows.clear();
+        mRows.reserve(mVisibleCount);
         mSelected = nullptr;
         mScrollToSelection = true;
         for (const auto& item : catalog) {
-            const bool unlocked = (mUnlocked & achievement_poc::bit(item.id)) != 0;
+            const bool unlocked = (mUnlocked & achievement_poc::bit(item.id)).any();
             if (!passes_filter(item, unlocked)) {
                 continue;
             }
             auto* row = append(content, "achievement-row");
-            const bool selected = visibleIndex++ == mSelection;
+            const bool selected = mRows.size() == mSelection;
+            mRows.push_back({row, &item});
             row->SetClass("carapaca-selected", selected);
             if (selected) {
                 mSelected = &item;
@@ -222,7 +228,7 @@ AchievementsWindow::AchievementsWindow()
             rupee->SetProperty("color", rupee_color(item.rarity));
             append_image(rupee, "carapaca-rupee", art_path(rupee_file(item.rarity)));
             append_text(rupee, fmt::format("{}{}", rupee_label(item.rarity),
-                item.optional ? " · Opcional" : ""));
+                item.id == Id::carapaca_mastery ? " · Reservada" : item.optional ? " · Opcional" : ""));
             auto* badge = append(header, "status-badge");
             badge->SetClass(unlocked ? "success" : "error", true);
             append_text(badge, unlocked ? "Desbloqueada" : "Bloqueada");
@@ -232,6 +238,15 @@ AchievementsWindow::AchievementsWindow()
         }
     });
     update();
+}
+
+void AchievementsWindow::select_row(std::size_t index) {
+    if (index >= mRows.size() || index == mSelection) return;
+    mRows[mSelection].element->SetClass("carapaca-selected", false);
+    mSelection = index;
+    mRows[index].element->SetClass("carapaca-selected", true);
+    mSelected = mRows[index].definition;
+    mScrollToSelection = true;
 }
 
 bool AchievementsWindow::handle_nav_command(Rml::Event& event, NavCommand cmd) {
@@ -248,21 +263,21 @@ bool AchievementsWindow::handle_nav_command(Rml::Event& event, NavCommand cmd) {
     }
     case NavCommand::Left:
     case NavCommand::Right: {
-        const int step = cmd == NavCommand::Right ? 1 : 3;
-        mRarity = static_cast<RarityFilter>((static_cast<int>(mRarity) + step) % 4);
+        const int step = cmd == NavCommand::Right ? 1 : 4;
+        mRarity = static_cast<RarityFilter>((static_cast<int>(mRarity) + step) % 5);
         mSelection = 0;
         break;
     }
     case NavCommand::Up:
         if (mSelection > 0) {
-            --mSelection;
+            select_row(mSelection - 1);
         }
-        break;
+        return true;
     case NavCommand::Down:
         if (mSelection + 1 < mVisibleCount) {
-            ++mSelection;
+            select_row(mSelection + 1);
         }
-        break;
+        return true;
     default:
         return Window::handle_nav_command(event, cmd);
     }
@@ -299,7 +314,8 @@ void AchievementsWindow::update() {
 }
 
 void AchievementsWindow::preview_selected() {
-    if (!visible() || mSelected == nullptr || mPreviewFinished) {
+    if (!visible() || mSelected == nullptr || mPreviewFinished ||
+        mSelected->id == Id::carapaca_mastery) {
         return;
     }
     mPreviewFinished = std::make_shared<bool>(false);

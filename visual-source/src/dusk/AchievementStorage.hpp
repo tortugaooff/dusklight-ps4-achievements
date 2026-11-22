@@ -28,13 +28,20 @@ public:
             record[3] != '\n') {
             return std::nullopt;
         }
-        return static_cast<Mask>(record[2] - '0');
+        return Mask{static_cast<unsigned>(record[2] - '0')};
     }
 
     static std::optional<Mask> load(const std::filesystem::path& path,
-                                    const std::filesystem::path& legacy) {
+                                    const std::filesystem::path& legacy,
+                                    const std::filesystem::path& previous = {}) {
         std::error_code error;
         if (!std::filesystem::exists(path, error)) {
+            if (error) return std::nullopt;
+            if (!previous.empty() && std::filesystem::exists(previous, error)) {
+                const auto migrated = load_ids(previous, "CARAPACA:2");
+                if (!migrated || !save(path, *migrated)) return std::nullopt;
+                return migrated;
+            }
             if (error) return std::nullopt;
             if (!std::filesystem::exists(legacy, error)) {
                 return error ? std::nullopt : std::optional<Mask>{0};
@@ -44,9 +51,15 @@ public:
             return migrated;
         }
 
+        return load_ids(path, "CARAPACA:3");
+    }
+
+private:
+    static std::optional<Mask> load_ids(const std::filesystem::path& path,
+                                        std::string_view signature) {
         std::ifstream file(path, std::ios::binary);
         std::string line;
-        if (!std::getline(file, line) || line != "CARAPACA:2" || file.eof()) return std::nullopt;
+        if (!std::getline(file, line) || line != signature || file.eof()) return std::nullopt;
         Mask mask = 0;
         while (std::getline(file, line)) {
             if (file.eof()) return std::nullopt;
@@ -57,20 +70,21 @@ public:
                     break;
                 }
             }
-            if (entry == 0 || (mask & entry) != 0) return std::nullopt;
+            if (entry.none() || (mask & entry).any()) return std::nullopt;
             mask |= entry;
         }
         return file.eof() && !file.bad() ? std::optional<Mask>{mask} : std::nullopt;
     }
 
+public:
     static bool save(const std::filesystem::path& path, Mask unlocked) {
         auto temporary = path;
         temporary += ".tmp";
         {
             std::ofstream file(temporary, std::ios::binary | std::ios::trunc);
-            file << "CARAPACA:2\n";
+            file << "CARAPACA:3\n";
             for (const auto& item : catalog) {
-                if (unlocked & bit(item.id)) file << item.key << '\n';
+                if ((unlocked & bit(item.id)).any()) file << item.key << '\n';
             }
             file.close();
             if (!file) {

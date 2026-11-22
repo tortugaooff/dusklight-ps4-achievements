@@ -1,0 +1,8 @@
+#include "Historia.inc"
+#include "Templos.inc"
+#include "Equipamento.inc"
+#include "Combate.inc"
+#include "Colecao.inc"
+#include "Minijogos.inc"
+#include "Exploracao.inc"
+#include "Especial.inc"

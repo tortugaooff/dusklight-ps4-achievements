@@ -1,53 +1,104 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
-
 #include "AchievementStorage.hpp"
 
 #include <cassert>
 #include <set>
 
+static dusk::achievement_poc::Mask observe(std::string_view flag, std::string_view item,
+                                          unsigned poeCount) {
+    using namespace dusk::achievement_poc;
+    Mask mask;
+    const auto record = [&mask](Id id, bool reached) {
+        if (reached) mask |= bit(id);
+    };
+#define CARAPACA_READ_FLAG(value) (flag == #value)
+#define CARAPACA_READ_ITEM(value) (item == #value)
+#include "catalog/Observation.inc"
+#undef CARAPACA_READ_FLAG
+#undef CARAPACA_READ_ITEM
+    return mask;
+}
+
 int main(int argc, char** argv) {
     using namespace dusk::achievement_poc;
     assert(argc == 2);
     const auto root = std::filesystem::path(argv[1]);
-    assert(std::size(catalog) == 15);
-    std::set<std::string_view> ids;
-    Mask seen = 0;
-    for (const auto& definition : catalog) {
-        assert(ids.insert(definition.key).second);
-        const Mask unlock = bit(definition.id);
-        assert((seen & unlock) == 0);
-        seen |= unlock;
+    std::filesystem::create_directories(root);
+    assert(kCatalogCount == 85);
+    std::set<std::string_view> keys;
+    Mask expected;
+    Mask mandatory;
+    for (const auto& entry : catalog) {
+        assert(keys.insert(entry.key).second);
+        const Mask observed = bit(entry.id);
+        assert((expected & observed).none());
+        expected |= observed;
+        if (!entry.optional) mandatory |= observed;
+        if (entry.id == Id::carapaca_mastery) continue;
         AchievementCore core;
-        assert(core.unlock(0) == 0);
-        assert(core.unlock(unlock) == unlock);
-        assert(core.unlock(unlock) == 0);
-        assert(core.unlocked() == unlock);
+        assert(core.unlock({}).none());
+        assert(core.unlock(observed) == observed);
+        assert(core.unlock(observed).none());
     }
-    assert(seen == allBits);
+    assert(expected.all());
+    assert(mastery_ready(mandatory));
+    assert(!mastery_ready(mandatory & ~bit(Id::DefeatDiababa)));
+    AchievementCore core;
+    assert(core.unlock(expected) == (expected & ~bit(Id::carapaca_mastery)));
+    assert(core.unlocked().count() == 84);
     assert(goatRunCompleted(20, 20, 59999));
     assert(!goatRunCompleted(20, 20, 60000));
-    assert(!goatRunCompleted(20, 19, 59000));
-    assert(!goatRunCompleted(10, 10, 50000));
+    assert(!goatRunCompleted(20, 19, 59999));
     assert(!goatRunCompleted(20, 20, 0));
-    for (Mask bits = 0; bits <= legacyBits; ++bits) {
-        const auto fixture = root / std::to_string(bits);
-        std::filesystem::create_directories(fixture);
-        const auto legacy = fixture / "achievements-poc-v1.dat";
-        const auto current = fixture / "achievements-v2.dat";
-        std::ofstream(legacy, std::ios::binary) << "1:" << bits << '\n';
-        assert(AchievementStorage::load(current, legacy) == bits);
-        assert(AchievementStorage::load(current, legacy) == bits);
-        AchievementCore migrated(bits);
-        assert(migrated.unlock(allBits) == (allBits & ~bits));
-        assert(AchievementStorage::save(current, migrated.unlocked()));
-        assert(AchievementStorage::load(current, legacy) == allBits);
-        assert(AchievementStorage::load_legacy(legacy) == bits);
+    assert(observe({}, {}, 19).none());
+    assert(observe({}, {}, 20) == bit(Id::poe_20));
+    assert(observe({}, {}, 39) == bit(Id::poe_20));
+    assert(observe({}, {}, 40) == (bit(Id::poe_20) | bit(Id::poe_40)));
+    assert(observe({}, {}, 59) == observe({}, {}, 40));
+    assert(observe({}, {}, 60) == (observe({}, {}, 40) | bit(Id::poe_60)));
+#define TEST_flag(id, value) assert(observe(#value, {}, 0) == bit(Id::id));
+#define TEST_item(id, value) assert(observe({}, #value, 0) == bit(Id::id));
+#define TEST_poe(id, value)
+#define TEST_event(id, value)
+#define TEST_mastery(id, value)
+#define CARAPACA_ENTRY(id, name, desc, rarity, optional, rule, value) TEST_##rule(id, value)
+#include "catalog/Index.inc"
+#undef CARAPACA_ENTRY
+#undef TEST_flag
+#undef TEST_item
+#undef TEST_poe
+#undef TEST_event
+#undef TEST_mastery
+
+    for (unsigned old = 0; old <= legacyBits; ++old) {
+        const auto sample = root / std::to_string(old);
+        std::filesystem::create_directories(sample);
+        const auto v1 = sample / "achievements-poc-v1.dat";
+        const auto v2 = sample / "achievements-v3.dat";
+        std::ofstream(v1, std::ios::binary) << "1:" << old << '\n';
+        assert(AchievementStorage::load(v2, v1) == Mask{old});
+        assert(AchievementStorage::load(v2, v1) == Mask{old});
+        assert(AchievementStorage::save(v2, core.unlocked()));
+        assert(AchievementStorage::load(v2, v1) == core.unlocked());
+        assert(AchievementStorage::load_legacy(v1) == Mask{old});
     }
-    const auto invalid = root / "invalid.dat";
-    std::ofstream(invalid, std::ios::binary) << "CARAPACA:2\nslingshot\nslingshot\n";
-    assert(!AchievementStorage::load(invalid, root / "missing.dat"));
-    std::ofstream(invalid, std::ios::binary) << "CARAPACA:2\nslingshot";
-    assert(!AchievementStorage::load(invalid, root / "missing.dat"));
+
+    const auto v2 = root / "published.dat";
+    std::ofstream(v2, std::ios::binary) << "CARAPACA:2\nslingshot\nforest_boss_key\n";
+    const auto v3 = root / "migrated-v3.dat";
+    auto loaded = AchievementStorage::load(v3, {}, v2);
+    assert(loaded == (bit(Id::Slingshot) | bit(Id::ForestBossKey)));
+    std::ifstream original(v2, std::ios::binary);
+    assert(std::string(std::istreambuf_iterator<char>(original), {}) ==
+           "CARAPACA:2\nslingshot\nforest_boss_key\n");
+    AchievementCore restored(*loaded);
+    const auto retroactive = bit(Id::Slingshot) | bit(Id::defeat_argorok) | bit(Id::poe_60);
+    assert(restored.unlock(retroactive) == (retroactive & ~bit(Id::Slingshot)));
+    assert(restored.unlock(retroactive).none());
+    std::ofstream(v3, std::ios::binary) << "CARAPACA:3\nslingshot\nslingshot\n";
+    assert(!AchievementStorage::load(v3, {}));
+    std::ofstream(v3, std::ios::binary) << "CARAPACA:3\nslingshot";
+    assert(!AchievementStorage::load(v3, {}));
 }

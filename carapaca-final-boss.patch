@@ -1,0 +1,11 @@
+diff --git a/src/d/actor/d_a_b_gnd.cpp b/src/d/actor/d_a_b_gnd.cpp
+--- a/src/d/actor/d_a_b_gnd.cpp
++++ b/src/d/actor/d_a_b_gnd.cpp
+@@ -2060,4 +2060,7 @@ static void b_gnd_g_down(b_gnd_class* i_this) {
+             i_this->mActionMode = ACTION_END;
+             i_this->mMoveMode = 0;
++#if TARGET_PC
++            dusk::AchievementSystem::get().signal(dusk::achievement_poc::Id::defeat_ganondorf);
++#endif
+             Z2GetAudioMgr()->bgmStop(30, 0);
+         }

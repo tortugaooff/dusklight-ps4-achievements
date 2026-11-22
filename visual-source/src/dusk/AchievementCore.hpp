@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <bitset>
 #include <iterator>
 
 namespace dusk::achievement_poc {
@@ -8,9 +9,13 @@ namespace dusk::achievement_poc {
 enum class Id : std::uint8_t {
     Slingshot, Goats, Cucco, RescueTalo, MidnaFreesWolf, MeetZelda, FaronVessel,
     RestoreFaron, FishingRod, CoroLantern, RecoverLantern, ForestMap,
-    GaleBoomerang, ForestBossKey, DefeatDiababa
+    GaleBoomerang, ForestBossKey, DefeatDiababa,
+#define CARAPACA_ENTRY(id, name, desc, rarity, optional, rule, value) id,
+#include "catalog/Index.inc"
+#undef CARAPACA_ENTRY
+    Count
 };
-enum class Rarity : std::uint8_t { Green, Blue, Red };
+enum class Rarity : std::uint8_t { Green, Blue, Red, Luminous };
 struct Definition {
     Id id;
     const char* key;
@@ -37,16 +42,28 @@ inline constexpr Definition catalog[] = {
     {Id::GaleBoomerang, "gale_boomerang", "Vento de volta", "Obtenha o Bumerangue do Vento.", Rarity::Blue},
     {Id::ForestBossKey, "forest_boss_key", "A chave da última porta", "Obtenha a chave do chefe do Templo da Floresta.", Rarity::Blue, true},
     {Id::DefeatDiababa, "defeat_diababa", "Raízes arrancadas", "Derrote Diababa.", Rarity::Red},
+#define CARAPACA_ENTRY(id, name, desc, rarity, optional, rule, value) \
+    {Id::id, #id, name, desc, Rarity::rarity, optional},
+#include "catalog/Index.inc"
+#undef CARAPACA_ENTRY
 };
 
-using Mask = std::uint64_t;
-constexpr Mask bit(Id id) { return Mask{1} << static_cast<unsigned>(id); }
-inline constexpr Mask legacyBits = bit(Id::Slingshot) | bit(Id::Goats) | bit(Id::Cucco);
-inline constexpr Mask allBits = [] {
-    Mask result = 0;
-    for (const auto& item : catalog) result |= bit(item.id);
-    return result;
-}();
+inline constexpr auto kCatalogCount = static_cast<std::size_t>(Id::Count);
+static_assert(std::size(catalog) == kCatalogCount);
+using Mask = std::bitset<kCatalogCount>;
+inline Mask bit(Id id) { return Mask{}.set(static_cast<std::size_t>(id)); }
+inline constexpr unsigned legacyBits = 7;
+
+inline bool mastery_ready(const Mask& unlocked) {
+    for (const auto& item : catalog) {
+        if (!item.optional && item.id != Id::carapaca_mastery &&
+            !unlocked.test(static_cast<std::size_t>(item.id))) return false;
+    }
+    return true;
+}
+
+// Arm only after the mandatory catalog has passed console validation.
+inline constexpr bool kDefinitiveCatalogApproved = false;
 
 constexpr bool goatRunCompleted(int target, int entered, int elapsedMs) {
     return target == 20 && entered == target && elapsedMs > 0 && elapsedMs < 60000;
@@ -56,7 +73,11 @@ class AchievementCore {
 public:
     explicit AchievementCore(Mask unlocked = 0) : mUnlocked(unlocked) {}
     Mask unlock(Mask observed) {
-        const Mask newlyUnlocked = observed & allBits & ~mUnlocked;
+        observed &= ~bit(Id::carapaca_mastery);
+        if (kDefinitiveCatalogApproved && mastery_ready(mUnlocked | observed)) {
+            observed |= bit(Id::carapaca_mastery);
+        }
+        const Mask newlyUnlocked = observed & ~mUnlocked;
         mUnlocked |= newlyUnlocked;
         return newlyUnlocked;
     }

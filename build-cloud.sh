@@ -28,6 +28,7 @@ test "$(git -C src/dusklight rev-parse HEAD)" = 5811958531cb0a9eafeb293fafcb3607
 git -C src/dusklight apply --check "$bundle/dusklight-r25-conquistas-cloud.patch"
 git -C src/dusklight apply "$bundle/dusklight-r25-conquistas-cloud.patch"
 cp -a "$bundle/visual-source/." src/dusklight/
+git -C src/dusklight apply "$bundle/carapaca-final-boss.patch"
 git -C src/dusklight fetch --no-tags https://github.com/TwilitRealm/dusklight.git refs/tags/v2.0.3:refs/tags/v2.0.3
 test "$(git -C src/dusklight rev-parse 'v2.0.3^{commit}')" = 40457c6adb381928e4b5fef6ed459ed291edd5e2
 git -C src/dusklight merge-base --is-ancestor v2.0.3 HEAD

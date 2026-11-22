@@ -1,0 +1,8 @@
+CARAPACA_ENTRY(defeat_fyrus, "O fogo se apaga", "Derrote Fyrus e conclua as Minas Goron.", Blue, false, flag, M_031)
+CARAPACA_ENTRY(defeat_morpheel, "Além das profundezas", "Derrote Morpheel e conclua o Templo do Lago.", Blue, false, flag, M_045)
+CARAPACA_ENTRY(defeat_stallord, "Ossos na areia", "Derrote Stallord e conclua o Patíbulo do Deserto.", Blue, false, flag, F_0265)
+CARAPACA_ENTRY(defeat_blizzeta, "O fim da nevasca", "Derrote Blizzeta e conclua as Ruínas do Pico Nevado.", Blue, false, flag, F_0266)
+CARAPACA_ENTRY(defeat_armogohma, "A teia do tempo", "Derrote Armogohma e conclua o Templo do Tempo.", Blue, false, flag, F_0267)
+CARAPACA_ENTRY(defeat_argorok, "Dragão entre nuvens", "Derrote Argorok e conclua a Cidade no Céu.", Red, false, flag, F_0268)
+CARAPACA_ENTRY(defeat_zant, "O usurpador cai", "Derrote Zant e conclua o Palácio do Crepúsculo.", Red, false, flag, F_0570)
+CARAPACA_ENTRY(defeat_ganondorf, "O último duelo", "Derrote Ganondorf com o golpe final.", Red, false, event, 0)
