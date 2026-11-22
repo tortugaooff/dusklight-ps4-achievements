@@ -6,6 +6,8 @@
 namespace dusk::ui {
 
 void show_achievement_toasts(achievement_poc::Mask newlyUnlocked);
+void register_carapaca_art();
+void unregister_carapaca_art();
 
 class AchievementsWindow : public Window {
 public:

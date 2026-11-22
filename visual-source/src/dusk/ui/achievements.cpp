@@ -1,12 +1,67 @@
 #include "achievements.hpp"
 
+#include <aurora/rmlui.hpp>
+#include <borealis/log.hpp>
 #include <fmt/format.h>
 
+#include <fstream>
 #include <iterator>
+#include <optional>
+#include <span>
+#include <vector>
 
 namespace dusk::ui {
 namespace {
 using namespace achievement_poc;
+
+constexpr borealis::Log Log{"dusk::ui::carapaca"};
+constexpr std::string_view kArtScheme = "carapaca-art";
+constexpr std::string_view kArtPrefix = "carapaca-art://";
+
+struct Artwork {
+    std::string_view key;
+    unsigned size;
+    std::vector<std::byte> pixels;
+    bool attempted = false;
+};
+
+Artwork artwork[] = {
+    {"slingshot", 256}, {"cucco_control", 256}, {"goats_under_minute", 256},
+    {"rupia-verde", 128}, {"rupia-azul", 128}, {"rupia-vermelha", 128},
+};
+
+std::optional<aurora::rmlui::RuntimeTexture> load_artwork(std::string_view source) {
+    if (!source.starts_with(kArtPrefix)) {
+        return std::nullopt;
+    }
+    const auto key = source.substr(kArtPrefix.size());
+    for (auto& art : artwork) {
+        if (art.key != key) {
+            continue;
+        }
+        if (!art.attempted) {
+            art.attempted = true;
+            const auto path = resource_path(fmt::format("carapaca/{}.rgba", key));
+            std::ifstream file(path, std::ios::binary);
+            art.pixels.resize(art.size * art.size * 4);
+            if (!file.read(reinterpret_cast<char*>(art.pixels.data()), art.pixels.size()) ||
+                file.peek() != std::char_traits<char>::eof() || file.bad()) {
+                Log.warn("Invalid Carapaca texture: {}", path.generic_string());
+                art.pixels.clear();
+            }
+        }
+        if (!art.pixels.empty()) {
+            return aurora::rmlui::RuntimeTexture{
+                .width = art.size,
+                .height = art.size,
+                .rgba8 = std::span<const std::byte>(art.pixels),
+                .premultipliedAlpha = false,
+            };
+        }
+        break;
+    }
+    return std::nullopt;
+}
 
 const char* rupee_color(Id id) {
     switch (id) {
@@ -28,19 +83,19 @@ const char* rupee_label(Id id) {
 
 const char* rupee_file(Id id) {
     switch (id) {
-    case Id::Slingshot: return "rupia-verde.png";
-    case Id::Cucco: return "rupia-azul.png";
-    case Id::Goats: return "rupia-vermelha.png";
+    case Id::Slingshot: return "rupia-verde";
+    case Id::Cucco: return "rupia-azul";
+    case Id::Goats: return "rupia-vermelha";
     }
     return "";
 }
 
 Rml::String art_path(std::string_view file) {
-    return resource_path(std::filesystem::path("carapaca") / file).generic_string();
+    return fmt::format("{}{}", kArtPrefix, file);
 }
 
 Rml::String illustration(const Definition& item) {
-    return art_path(fmt::format("{}.png", item.key));
+    return art_path(item.key);
 }
 
 void append_image(Rml::Element* parent, const char* css, const Rml::String& path) {
@@ -61,6 +116,18 @@ void enqueue_toast(const Definition& item, std::shared_ptr<bool> preview = {}) {
     });
 }
 } // namespace
+
+void register_carapaca_art() {
+    aurora::rmlui::register_texture_provider(std::string(kArtScheme), load_artwork);
+}
+
+void unregister_carapaca_art() {
+    aurora::rmlui::unregister_texture_provider(kArtScheme);
+    for (auto& art : artwork) {
+        art.pixels.clear();
+        art.attempted = false;
+    }
+}
 
 void show_achievement_toasts(achievement_poc::Mask newlyUnlocked) {
     for (const auto& item : achievement_poc::catalog) {

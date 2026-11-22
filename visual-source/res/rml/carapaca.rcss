@@ -3,8 +3,10 @@ window.carapaca-window {
     height: 88%;
     max-width: 760dp;
     max-height: 590dp;
-    border-color: #8b7551;
-    background-color: #1c1a19;
+    border-width: 1dp;
+    border-color: #aa8d58;
+    background-color: #221e1b;
+    box-shadow: 0 0 18dp 3dp #100e0d;
 }
 
 window.carapaca-window content {
@@ -51,10 +53,13 @@ window.carapaca-window content {
 .carapaca-filter {
     color: #e4c894;
     margin: 4dp 0 8dp;
+    padding: 7dp 0;
+    border-bottom-width: 1dp;
+    border-bottom-color: #6c573b;
 }
 
 .carapaca-window achievement-row.carapaca-selected {
-    background-color: #3a3025;
+    background-color: #3e3225;
     border-left-width: 2dp;
     border-left-color: #ceb47d;
 }
@@ -71,6 +76,8 @@ window.carapaca-window content {
     height: 58dp;
     flex-shrink: 0;
     margin-right: 12dp;
+    border-width: 1dp;
+    border-color: #8f7349;
 }
 
 .carapaca-rupee {
