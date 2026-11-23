@@ -7,7 +7,8 @@
 #include <set>
 
 static dusk::achievement_poc::Mask observe(std::string_view flag, std::string_view item,
-                                          unsigned poeCount) {
+                                          unsigned poeCount, bool hasFishingRod = false,
+                                          bool hasLantern = false) {
     using namespace dusk::achievement_poc;
     Mask mask;
     const auto record = [&mask](Id id, bool reached) {
@@ -43,6 +44,9 @@ int main(int argc, char** argv) {
         assert(core.unlock(observed).none());
     }
     assert(expected.all());
+    assert(mandatory.count() == 47);
+    assert(!mandatory.test(static_cast<std::size_t>(Id::carapaca_mastery)));
+    assert(mandatory.test(static_cast<std::size_t>(Id::defeat_ganondorf)));
     assert(mastery_ready(mandatory));
     assert(!mastery_ready(mandatory & ~bit(Id::DefeatDiababa)));
     AchievementCore core;
@@ -58,6 +62,21 @@ int main(int argc, char** argv) {
     assert(observe({}, {}, 40) == (bit(Id::poe_20) | bit(Id::poe_40)));
     assert(observe({}, {}, 59) == observe({}, {}, 40));
     assert(observe({}, {}, 60) == (observe({}, {}, 40) | bit(Id::poe_60)));
+    assert(observe({}, {}, 0).none());
+    assert(observe("M_095", {}, 0).none());
+    const Mask equipment = bit(Id::FishingRod) | bit(Id::CoroLantern);
+    assert(observe({}, "FISHING_ROD_1", 0) == bit(Id::FishingRod));
+    assert(observe({}, "KANTERA", 0) == bit(Id::CoroLantern));
+    assert(observe({}, {}, 0, true, false) == bit(Id::FishingRod));
+    assert(observe({}, {}, 0, false, true) == bit(Id::CoroLantern));
+    const Mask oldSaveEquipment = observe({}, "FISHING_ROD_1", 0) | observe({}, "KANTERA", 0);
+    const auto equipmentRecord = root / "equipment-v3.dat";
+    AchievementCore existing(bit(Id::Slingshot));
+    assert(existing.unlock(oldSaveEquipment) == equipment);
+    assert(AchievementStorage::save(equipmentRecord, existing.unlocked()));
+    auto reloaded = AchievementStorage::load(equipmentRecord, {});
+    assert(reloaded == (equipment | bit(Id::Slingshot)));
+    assert(AchievementCore(*reloaded).unlock(oldSaveEquipment).none());
 #define TEST_flag(id, value) assert(observe(#value, {}, 0) == bit(Id::id));
 #define TEST_item(id, value) assert(observe({}, #value, 0) == bit(Id::id));
 #define TEST_poe(id, value)

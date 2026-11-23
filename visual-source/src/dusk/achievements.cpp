@@ -23,6 +23,8 @@ Mask persistent_progress() {
     };
     using Flags = dSv_event_flag_c;
     const auto poeCount = dComIfGs_getPohSpiritNum();
+    const bool hasFishingRod = dComIfGp_checkItemGet(dItemNo_FISHING_ROD_1_e, 0) != 0;
+    const bool hasLantern = dComIfGs_getItem(SLOT_1, true) == dItemNo_KANTERA_e;
 #define CARAPACA_READ_FLAG(value) dComIfGs_isEventBit(Flags::value)
 #define CARAPACA_READ_ITEM(value) dComIfGs_isItemFirstBit(dItemNo_##value##_e)
 #include "dusk/catalog/Observation.inc"
@@ -35,9 +37,6 @@ Mask persistent_progress() {
     record(Id::MeetZelda, dComIfGs_isEventBit(Flags::M_012));
     record(Id::FaronVessel, dComIfGs_isEventBit(Flags::F_0055));
     record(Id::RestoreFaron, dComIfGs_isEventBit(Flags::M_019));
-    record(Id::FishingRod, dComIfGp_checkItemGet(dItemNo_FISHING_ROD_1_e, 0));
-    record(Id::CoroLantern, dComIfGs_getItem(SLOT_1, true) == dItemNo_KANTERA_e ||
-        dComIfGs_isEventBit(Flags::M_095));
     record(Id::RecoverLantern, dComIfGs_isEventBit(Flags::F_0226));
     record(Id::GaleBoomerang, dComIfGs_getItem(SLOT_0, true) == dItemNo_BOOMERANG_e);
     // PAL GZ2P01 STAG records share save table 16 across D_MN05, D_MN05A and D_MN05B.

@@ -1,4 +1,7 @@
 // Caller supplies typed reads for the target and a record(id, reached) callback.
+record(Id::FishingRod, hasFishingRod || CARAPACA_READ_ITEM(FISHING_ROD_1));
+record(Id::CoroLantern, hasLantern || CARAPACA_READ_ITEM(KANTERA));
+
 #define CARAPACA_flag(id, value) record(Id::id, CARAPACA_READ_FLAG(value));
 #define CARAPACA_item(id, value) record(Id::id, CARAPACA_READ_ITEM(value));
 #define CARAPACA_poe(id, value) record(Id::id, poeCount >= value);
